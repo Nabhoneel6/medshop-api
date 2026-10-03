@@ -7,6 +7,8 @@ import categoryRoutes from "./src/routes/categoryRoutes.js";
 import medicineRoutes from "./src/routes/medicineRoutes.js";
 import cartRoutes from "./src/routes/cartRoutes.js";
 import orderRoutes from "./src/routes/orderRoutes.js";
+import adminRoutes from "./src/routes/adminRoutes.js";
+import doctorRoutes from "./src/routes/doctorRoutes.js";
 
 dotenv.config();
 connectDB();
@@ -43,6 +45,8 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/medicines", medicineRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/doctors", doctorRoutes);
 
 // 404
 app.use((req, res) => {

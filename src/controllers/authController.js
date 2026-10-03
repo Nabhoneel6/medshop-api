@@ -118,3 +118,104 @@ export const getMe = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+// @desc    Update profile (name, phone)
+// @route   PUT /api/auth/profile
+// @access  Private
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (name) user.name = name;
+    if (phone !== undefined) user.phone = phone;
+
+    await user.save();
+
+    res.status(200).json({
+      message: "Profile updated",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        addresses: user.addresses,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Change password
+// @route   PUT /api/auth/password
+// @access  Private
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res
+        .status(400)
+        .json({ message: "Current and new passwords required" });
+    }
+
+    if (newPassword.length < 6) {
+      return res
+        .status(400)
+        .json({ message: "New password must be at least 6 characters" });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    const isMatch = await user.matchPassword(currentPassword);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Current password is incorrect" });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Add new address
+// @route   POST /api/auth/addresses
+// @access  Private
+export const addAddress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    user.addresses.push(req.body);
+    await user.save();
+    res
+      .status(201)
+      .json({ message: "Address added", addresses: user.addresses });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Delete address
+// @route   DELETE /api/auth/addresses/:addressId
+// @access  Private
+export const deleteAddress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    user.addresses = user.addresses.filter(
+      (a) => a._id.toString() !== req.params.addressId,
+    );
+    await user.save();
+    res
+      .status(200)
+      .json({ message: "Address deleted", addresses: user.addresses });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
