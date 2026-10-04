@@ -15,22 +15,36 @@ connectDB();
 
 const app = express();
 
-// Middlewares
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://medshop-frontend.vercel.app", // your Vercel URL
-];
-
+// ============ CORS ============
+// Allow: localhost any port, any vercel.app subdomain (production + previews)
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+      // Allow requests with no origin (Postman, curl, etc.)
+      if (!origin) return callback(null, true);
+
+      const allowedPatterns = [
+        /^http:\/\/localhost:\d+$/,
+        /^https:\/\/.*\.vercel\.app$/,
+      ];
+
+      const allowed = allowedPatterns.some((pattern) => pattern.test(origin));
+
+      if (allowed) {
+        callback(null, true);
+      } else {
+        console.warn("CORS blocked origin:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   }),
 );
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Health check
+// ============ HEALTH CHECK ============
 app.get("/", (req, res) => {
   res.json({
     message: "💊 MedShop API is running",
@@ -39,7 +53,7 @@ app.get("/", (req, res) => {
   });
 });
 
-// API Routes
+// ============ API ROUTES ============
 app.use("/api/auth", authRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/medicines", medicineRoutes);
@@ -48,12 +62,12 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/doctors", doctorRoutes);
 
-// 404
+// ============ 404 ============
 app.use((req, res) => {
   res.status(404).json({ message: `Route ${req.originalUrl} not found` });
 });
 
-// Error handler
+// ============ ERROR HANDLER ============
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).json({ message: err.message });
